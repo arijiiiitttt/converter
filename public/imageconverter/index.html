@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Image Converter</title>
+  <link rel="icon" href="./assets/icons/logos/converter.png" sizes="64x64" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script> <!-- Nice Icons -->
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #eef3f8;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      width: 400px;
+      max-width: 95%;
+      text-align: center;
+    }
+    .header {
+      background: linear-gradient(135deg, #7b61ff, #5c6cff);
+      color: #fff;
+      padding: 1rem;
+      border-radius: 14px 14px 0 0;
+      margin: -2rem -2rem 1rem -2rem;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #drop-area {
+      background: #f4f6fb;
+      border: 2px dashed #aab0c6;
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    #drop-area:hover {
+      background: #ebedf5;
+    }
+    #fileInput {
+      display: none;
+    }
+    #fileInfo {
+      background: #f4f6fb;
+      padding: 0.8rem;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 1rem;
+      display: none;
+      text-align: left;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    button {
+      padding: 10px;
+      width: 48%;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px 1%;
+      transition: 0.3s;
+      border: none;
+    }
+    .convert-btn {
+      background: #7b61ff;
+      color: #fff;
+    }
+    .convert-btn:hover {
+      background: #5c6cff;
+    }
+    .reset-btn {
+      background: #fff;
+      color: #f44336;
+      border: 2px solid #f44336;
+    }
+    .reset-btn:hover {
+      background: #f44336;
+      color: #fff;
+    }
+    #progressBar {
+      width: 100%;
+      background: #f4f6fb;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 10px;
+      height: 12px;
+      display: none;
+    }
+    #progress {
+      width: 0%;
+      height: 100%;
+      background: #7b61ff;
+      transition: width 0.3s;
+    }
+    #downloadSection {
+      margin-top: 20px;
+      display: none;
+    }
+    #downloadBtn {
+      background: #4CAF50;
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1><i class="ph ph-arrows-clockwise"></i> Image Converter</h1>
+    <p style="margin-top: 5px; font-size: 14px;">Convert image's format quickly and securely</p>
+  </div>
+
+  <div id="drop-area">
+    <p><i class="ph ph-cloud-arrow-up" style="font-size: 24px;"></i><br>Drag & drop files or click to browse</p>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <div id="fileInfo">
+    <p><i class="ph ph-file-text"></i> <span id="fileName">No file selected</span></p>
+    <p><span id="fileSize"></span></p>
+    <p><span id="fileType"></span></p>
+  </div>
+
+  <input type="text" id="newFileName" placeholder="Enter new file name">
+
+  <select id="formatSelect">
+    <option value="" disabled selected>Select format</option>
+    <option value="image/png">PNG</option>
+    <option value="image/jpeg">JPEG</option>
+    <option value="image/webp">WEBP</option>
+  </select>
+
+  <div>
+    <button class="convert-btn" id="convertBtn"><i class="ph ph-gear"></i> Convert</button>
+    <button class="reset-btn" id="resetBtn"><i class="ph ph-arrow-counter-clockwise"></i> Reset</button>
+  </div>
+
+  <div id="progressBar">
+    <div id="progress"></div>
+  </div>
+
+  <div id="downloadSection">
+    <p style="margin-top: 15px;"><i class="ph ph-check-circle" style="color: #4CAF50; font-size: 24px;"></i> Conversion Complete!</p>
+    <a id="downloadBtn" download>⬇ Download</a>
+  </div>
+</div>
+
+<script>
+  const dropArea = document.getElementById('drop-area');
+  const fileInput = document.getElementById('fileInput');
+  const fileInfo = document.getElementById('fileInfo');
+  const fileNameSpan = document.getElementById('fileName');
+  const fileSizeSpan = document.getElementById('fileSize');
+  const fileTypeSpan = document.getElementById('fileType');
+  const newFileName = document.getElementById('newFileName');
+  const formatSelect = document.getElementById('formatSelect');
+  const convertBtn = document.getElementById('convertBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const progressBar = document.getElementById('progressBar');
+  const progress = document.getElementById('progress');
+  const downloadSection = document.getElementById('downloadSection');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let img = new Image();
+  let originalFileName = '';
+
+  dropArea.addEventListener('click', () => fileInput.click());
+
+  dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.style.background = '#ebedf5';
+  });
+
+  dropArea.addEventListener('dragleave', () => {
+    dropArea.style.background = '#f4f6fb';
+  });
+
+  dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropArea.style.background = '#f4f6fb';
+    handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file) return;
+    originalFileName = file.name.split('.')[0];
+    newFileName.value = originalFileName;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      img.src = e.target.result;
+      fileInfo.style.display = 'block';
+      fileNameSpan.textContent = file.name;
+      fileSizeSpan.textContent = `Size: ${(file.size/1024).toFixed(2)} KB`;
+      fileTypeSpan.textContent = `Type: ${file.type}`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  convertBtn.addEventListener('click', () => {
+    if (!img.src || !formatSelect.value) {
+      alert('Please upload a file and select a format!');
+      return;
+    }
+
+    progressBar.style.display = 'block';
+    progress.style.width = '0%';
+    downloadSection.style.display = 'none';
+
+    let interval = setInterval(() => {
+      if (parseInt(progress.style.width) >= 100) {
+        clearInterval(interval);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx.drawImage(img, 0, 0);
+
+        const newName = newFileName.value.trim() || originalFileName;
+        const format = formatSelect.value.split('/')[1];
+
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          downloadBtn.href = url;
+          downloadBtn.download = `${newName}.${format}`;
+          downloadSection.style.display = 'block';
+        }, formatSelect.value);
+
+      } else {
+        progress.style.width = (parseInt(progress.style.width) + 10) + '%';
+      }
+    }, 100);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    img.src = '';
+    fileInput.value = '';
+    fileInfo.style.display = 'none';
+    newFileName.value = '';
+    formatSelect.selectedIndex = 0;
+    progressBar.style.display = 'none';
+    progress.style.width = '0%';
+    downloadSection.style.display = 'none';
+  });
+</script>
+
+</body>
+</html>
